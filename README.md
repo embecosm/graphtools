@@ -34,3 +34,8 @@ Usage
 Up to date summary can be obtained by
 
     subgraph -h
+
+Verilator uses both colors and style of nodes and edges to indicate particular
+properties. For example the gate optimization netlists use nodes in blue for
+variables and yellow for logic, with dotted style for variables and logic that
+are "consumers".

@@ -211,11 +211,12 @@ check_attributes (void         *objp,
     clone the node from the old graph, add all its outgoing edges and recurse
     on their destinations.
 
-    @param [in] g      Old graph
-    @param [in] ng     New graph
-    @param [in] nodep  Node to be cloned from old to new graph
-    @param [in] depth  Depth to continue in the recursion
-    @param [in] amp    List of attributes to match/not match
+    @param [in] g          Old graph
+    @param [in] ng         New graph
+    @param [in] nodep      Node to be cloned from old to new graph
+    @param [in] depth      Depth to continue in the recursion
+    @param [in] from_root  TRUE if tree flows from root
+    @param [in] amp        List of attributes to match/not match
 
     @return  The node in the new graph */
 static Agnode_t *
@@ -223,40 +224,51 @@ add_nodes (Agraph_t     *g,
 	   Agraph_t     *ng,
 	   Agnode_t     *nodep,
 	   int           depth,
+	   int           from_root,
 	   Attr_match_t *amp)
 {
   char *node_name = agnameof (nodep);
-  Agnode_t *tailp;
+  Agnode_t *fromp;
 
   /* If we haven't seen this node, add it and recurse unless we have hit the
      depth limit. */
-  if (NULL == (tailp = agnode (ng, node_name, FALSE)))
+  if (NULL == (fromp = agnode (ng, node_name, FALSE)))
     {
-      tailp = add_node (ng, nodep);
+      fromp = add_node (ng, nodep);
 
       if (depth > 0)
 	{
 	  Agedge_t *edgep;
 
-	  for (edgep = agfstout (g, nodep);
+	  for (edgep = from_root ? agfstout (g, nodep) : agfstin (g, nodep);
 	       edgep != NULL;
-	       edgep = agnxtout (g, edgep))
+	       edgep = from_root ? agnxtout (g, edgep) : agnxtin (g, edgep))
 	    {
-	      Agnode_t *headp = aghead (edgep);
+	      Agnode_t *towardp = from_root ? aghead (edgep) : agtail (edgep);
 
-	      /* Only recurse if the edge and head node meet the attribute
+	      /* Only recurse if the edge and toward node meet the attribute
 		 requirements. */
 	      if (check_attributes (edgep, AGEDGE, amp)
-		  && check_attributes (headp, AGNODE, amp))
+		  && check_attributes (towardp, AGNODE, amp))
 		{
-		  add_edge (ng, edgep, tailp,
-			    add_nodes (g, ng, headp, depth - 1, amp));
+		  if (from_root)
+		    {
+			add_edge (ng, edgep, fromp,
+				  add_nodes (g, ng, towardp, depth - 1,
+					     from_root, amp));
+		    }
+		  else
+		    {
+			add_edge (ng, edgep,
+				  add_nodes (g, ng, towardp, depth - 1,
+					     from_root, amp), fromp);
+		    }
 		}
 	    }
 	}
     }
 
-  return  tailp;
+  return  fromp;
 
 }	/* add_nodes () */
 
@@ -303,7 +315,13 @@ main(int    argc,
       printf ("    specified attribute set to the specified value. Node\n");
       printf ("    attributes indicate by \"-na\", edge attributes by\n");
       printf ("    \"-ea\". \"no-\" indicates the attribute should *not*\n");
-      printf ("    match.\n");
+      printf ("    match\n\n");
+      printf ("-from-root\n\n");
+      printf ("    The tree is built using edges that flow from the root,\n");
+      printf ("    i.e the root is the tail (default)\n\n");
+      printf ("-to-root\n\n");
+      printf ("    The tree is built using edges that flow to the root,\n");
+      printf ("    i.e the root is the head\n");
       exit (0);
     }
 
@@ -327,11 +345,22 @@ main(int    argc,
   char         *root_label = NULL;
   Attr_match_t *match_listp = NULL;
   int           depth = INT_MAX;
+  int           from_root = TRUE;
   int           i;
 
   for (i = 1; NULL != argv[i]; i++)
     {
-      if ((argc > (i + 1)) && (0 == strcmp ("-l", argv[i])))
+      if (0 == strcmp ("-from-root", argv[i]))
+	{
+	    /* Tree must grow from the root. */
+	    from_root = TRUE;
+	}
+      else if (0 == strcmp ("-to-root", argv[i]))
+	{
+	    /* Tree must grow towards the root. */
+	    from_root = FALSE;
+	}
+      else if ((argc > (i + 1)) && (0 == strcmp ("-l", argv[i])))
 	{
 	  /* Label of root node */
 	  i++;
@@ -442,7 +471,7 @@ main(int    argc,
   /* Start at the root node and find all the nodes deriving from it, adding
      those nodes and the edges connecting them to the graph. Then write out
      the graph. */
-  (void) add_nodes (g, ng, rootp, depth, match_listp);
+  (void) add_nodes (g, ng, rootp, depth, from_root, match_listp);
   agwrite (ng, stdout);
 
 }	/* main () */
