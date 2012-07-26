@@ -1,4 +1,4 @@
-graphtools
+Graphtools
 ==========
 
 A collection of tools for manipulating GraphViz graphs, particularly intended
@@ -13,18 +13,18 @@ headers).
 Ensure you have the GraphViz (www.graphviz.org/) development tools
 installed. For example on Debian/Ubuntu/Linux Mint
 
-  sudo apt-get install graphviz-dev
+    sudo apt-get install graphviz-dev
 
 and on Red Hat/Fedora/CentOS
 
-  sudo yum install graphviz-devel
+    sudo yum install graphviz-devel
 
 Installing
 ==========
 
 No _makefile_ yet. Single line compile
 
-  gcc subgraph.c -lcgraph -o subgraph
+    gcc subgraph.c -lcgraph -o subgraph
 
 Install by copying the binary (_subgraph_) to your preferred location
 
@@ -33,4 +33,4 @@ Usage
 
 Up to date summary can be obtained by
 
-  subgraph -h
+    subgraph -h
