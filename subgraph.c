@@ -302,7 +302,7 @@ main(int    argc,
       printf ("--help\n\n");
       printf ("    Print this help message\n\n");
       printf ("-l <label>\n\n");
-      printf ("    Use the node with this label as root\n\n");
+      printf ("    Use the node with this label prefix as root\n\n");
       printf ("-n <node>\n\n");
       printf ("    Use the node with this name as root\n\n");
       printf ("-d <depth>\n\n");
@@ -433,7 +433,9 @@ main(int    argc,
 	  rootp = nodep;
 	  break;
 	}
-      else if (root_label && (0 == strcmp (agget (nodep, "label"), root_label)))
+      else if (root_label
+	       && (0 == strncmp (agget (nodep, "label"), root_label,
+				 strlen(root_label))))
 	{
 	  rootp = nodep;
 	  break;
@@ -448,10 +450,10 @@ main(int    argc,
 
   /* Create a new graph, add all the node and edge attributes from the old
      graph. */
-  char *ngname = malloc (snprintf (NULL, 0, "%s_%s", gname, root_label) + 1);
   Agraph_t *ng;
+  char     *ngname = malloc (snprintf (NULL, 0, "%s_subgraph", gname) + 1);
 
-  sprintf (ngname, "%s_%s", gname, root_label);
+  sprintf (ngname, "%s_subgraph", gname);
   ng = agopen (ngname, g->desc, NULL);
 
   /* Make tables of all the attributes for nodes and edges */
@@ -465,7 +467,17 @@ main(int    argc,
        a != NULL;
        a = agnxtattr (g, AGRAPH, a))
     {
-      agsafeset (ng, a->name, agxget (g, a), "");
+      char *val = agxget (g, a);
+
+      if (0 == strcmp(a->name, "label"))
+	{
+	  char *newval = malloc (snprintf (NULL, 0, "%s\\n%s", val,
+					   root_label) + 1);
+	  sprintf (newval, "%s\\n%s", val, root_label);
+	  val = newval;
+	}
+	  
+      agsafeset (ng, a->name, val, "");
     }
 
   /* Start at the root node and find all the nodes deriving from it, adding
