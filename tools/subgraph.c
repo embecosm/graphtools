@@ -239,7 +239,7 @@ main(int    argc,
 	  amp->name = argv[i];
 
 	  /* Look attribute  up in the old graph */
-	  if (amp->attr = agattr (g, amp->kind, amp->name, NULL))
+	  if ((amp->attr = agattr (g, amp->kind, amp->name, NULL)))
 	    {
 	      /* Valid attribute, add its value */
 	      i++;
@@ -327,5 +327,7 @@ main(int    argc,
      the graph. */
   (void) add_nodes (g, ng, rootp, depth, from_root, match_listp);
   agwrite (ng, stdout);
+
+  exit (0);
 
 }	/* main () */

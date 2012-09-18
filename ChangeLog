@@ -1,0 +1,56 @@
+2012-09-18  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	* .gitignore: Extended files to ignore for autotools.
+	* AUTHORS, ChangeLog, compile, config.guess, config.sub: Created.
+	* configure: Generated from configure.ac
+	* configure.ac, COPYING, depcomp: Created.
+	* doc: Directory for documentation created.
+	* doc/Makefile.am: Created.
+	* doc/Makefile.in: Generated from doc/Makefile.am
+	* INSTALL, install.sh: Created.
+	* lib: Directory for library code created.
+	* lib/graphlib.c: Moved from main directory.
+	* lib/graphtools.h: Moved from main directory, add_edge renamed as
+	clone_edge.
+	* lib/Makefile.am: Created.
+	* lib/Makefile.in: Generated from lib/Makefile.am
+	* ltmain.sh: Created.
+	* m4: Directory for m4 macros created.
+	* m4/libtool.m4, m4/ltoptions.m4, m4/ltsugar.m4, m4/ltversion.m4,
+	* m4/lt~obsolete.m4, Makefile.am: Created.
+	* Makefile.in: Generated from Makefile.am
+	* missing, NEWS, README.md: Created.
+	* README: Created as soft link to README.md.
+	* testsuite: Directory for test suite created.
+	* testsuite/Makefile.am: Created.
+	* testsuite/Makefile.in: Generated from testsuite/Makefile.am
+	* tools: Directory for tools code created.
+	* tools/Makefile.am: Created.
+	* tools/Makefile.in: Generated from tools/Makefile.am
+	* tools/subgraph.c: Moved from main directory.
+	(main): provide exit code at end, add parentheses around
+	assignment used as logic value.
+
+2012-09-18  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	* graphlib.c: Break out common functions to library
+	<Attr_match_t>: Definition moved from subgraph.c
+	<All_attr_t>: New type definiton.
+	(clone_attributes, check_attributes): Moved from subgraph.c
+	(clone_node): Moved and renamed from add_node in subgraph.c
+	(clone_edge): Moved and renamed from add_edge in subgraph.c
+	* graphtools.h: Common header created.
+	* subgraph.c: Move type definitions and common functions to
+	library.
+	<old_node_attrs, old_edge_attrs>: Replaced by old_attrs.
+	<new_node_attrs, new_edge_attrs>: Replaced by new_attrs.
+	(clone_attributes, check_attributes, add_node, add_edge): Moved to
+	library.
+
+2012-08-28  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	* subgraph.c (main): Allow label to be specified as prefix.
+
+2012-08-26  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	* .gitignore, COPYING, README.md, subgraph.c: Created.

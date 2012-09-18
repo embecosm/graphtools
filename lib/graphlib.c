@@ -202,8 +202,6 @@ check_attributes (void         *objp,
 		  int           kind,
 		  Attr_match_t *amp)
 {
-  int  res = TRUE;
-
   for (; amp != NULL; amp = amp->next)
     {
       if (amp->kind == kind)
