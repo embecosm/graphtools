@@ -25,7 +25,12 @@
 
 
 #The programs we are building
-bin_PROGRAMS = subgraph
+bin_PROGRAMS = connect \
+	       subgraph
+
+# Connect program
+connect_SOURCES = connect.c
+connect_LDADD   = ../lib/libgraphtools.la -lcgraph
 
 # Subgraph program
 subgraph_SOURCES = subgraph.c

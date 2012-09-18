@@ -1,5 +1,14 @@
 2012-09-18  Jeremy Bennett  <jeremy.bennett@embecosm.com>
 
+	* configure: Regenerated.
+	* configure.ac: Corrected package name.
+	* tools/connect.c: New file.
+	* tools/Makefile.am: Added connect as new program.
+	* tools/Makefile.in: Regenerated.
+	* tools/subgraph.c: Corrected commenting.
+
+2012-09-18  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
 	* .gitignore: Extended files to ignore for autotools.
 	* AUTHORS, ChangeLog, compile, config.guess, config.sub: Created.
 	* configure: Generated from configure.ac

@@ -28,7 +28,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 # Use a full version number (x.y.z, possibly with "rc<n>" as a suffix) when
 # preparing a release, otherwise use a the date version (yyyy-mm-dd).
-AC_INIT([pihwm], [2012-09-18], [support@embecosm.com])
+AC_INIT([graphtools], [2012-09-18], [support@embecosm.com])
 AC_CONFIG_MACRO_DIR([m4])
 
 # Generically use extensions such as _GNU_SOURCE if available.

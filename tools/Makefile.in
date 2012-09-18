@@ -58,7 +58,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-bin_PROGRAMS = subgraph$(EXEEXT)
+bin_PROGRAMS = connect$(EXEEXT) subgraph$(EXEEXT)
 subdir = tools
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -74,6 +74,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
+am_connect_OBJECTS = connect.$(OBJEXT)
+connect_OBJECTS = $(am_connect_OBJECTS)
+connect_DEPENDENCIES = ../lib/libgraphtools.la
 am_subgraph_OBJECTS = subgraph.$(OBJEXT)
 subgraph_OBJECTS = $(am_subgraph_OBJECTS)
 subgraph_DEPENDENCIES = ../lib/libgraphtools.la
@@ -90,8 +93,8 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(subgraph_SOURCES)
-DIST_SOURCES = $(subgraph_SOURCES)
+SOURCES = $(connect_SOURCES) $(subgraph_SOURCES)
+DIST_SOURCES = $(connect_SOURCES) $(subgraph_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -213,6 +216,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
+# Connect program
+connect_SOURCES = connect.c
+connect_LDADD = ../lib/libgraphtools.la -lcgraph
+
 # Subgraph program
 subgraph_SOURCES = subgraph.c
 subgraph_LDADD = ../lib/libgraphtools.la -lcgraph
@@ -293,6 +300,9 @@ clean-binPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+connect$(EXEEXT): $(connect_OBJECTS) $(connect_DEPENDENCIES) $(EXTRA_connect_DEPENDENCIES) 
+	@rm -f connect$(EXEEXT)
+	$(LINK) $(connect_OBJECTS) $(connect_LDADD) $(LIBS)
 subgraph$(EXEEXT): $(subgraph_OBJECTS) $(subgraph_DEPENDENCIES) $(EXTRA_subgraph_DEPENDENCIES) 
 	@rm -f subgraph$(EXEEXT)
 	$(LINK) $(subgraph_OBJECTS) $(subgraph_LDADD) $(LIBS)
@@ -303,6 +313,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/connect.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/subgraph.Po@am__quote@
 
 .c.o:
