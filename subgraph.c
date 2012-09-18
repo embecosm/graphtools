@@ -4,6 +4,8 @@
 
    Contributor Jeremy Bennett <jeremy.bennett@embecosm.com>
 
+   This file is part of Embecosm graphtools
+
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation, either version 3 of the License, or
@@ -34,174 +36,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <graphviz/cgraph.h>
+#include "graphtools.h"
 
 
-/*! A structure for attribute matching */
-struct attr_match
-{
-  char              *name;
-  int                matchit;		/*!< Bool whether to match/not match */
-  int                kind;		/*!< AGNODE or AGEDGE */
-  Agsym_t           *attr;		/*!< attribute in old graph */
-  char              *value;		/*!< value to match */
-  struct attr_match *next;		/*!< Hold as linked list */
-};
-
-typedef struct attr_match Attr_match_t;
-
-
-/* All the attributes held by nodes and edges of the original graph. Compute
-   once for efficiency and NULL terminate the lists. */
-static Agsym_t **old_node_attrs;	/*!< Node attributes in old graph */
-static Agsym_t **new_node_attrs;	/*!< Node attributes in new graph */
-static Agsym_t **old_edge_attrs;	/*!< Edge attributes in old graph */
-static Agsym_t **new_edge_attrs;	/*!< Edge attributes in new graph */
-
-
-/*! Clone one set of attributes of the old graph.
-
-    Clone the string attributes of a particular kind from one graph into a new
-    graph.
-
-    Create two vectors of attributes of a particular kind. One vector for the
-    attributes in the old graph, one for the same attributes added to the new
-    graph.
-
-    @param [in]  g          Old graph
-    @param [in]  ng         New graph
-    @param [out] old_attrs  Vector of attributes in old graph
-    @param [out] new_attrs  Vector of attributes added to new graph
-    @param [in]  kind       King of attributes to clone. */
-static void
-clone_attributes (Agraph_t   *g,
-		  Agraph_t   *ng,
-		  Agsym_t  ***old_attrs,
-		  Agsym_t  ***new_attrs,
-		  int         kind)
-{
-  int  n = 0;
-  Agsym_t *a;
-
-  /* Find out how many node attributes and alloc space for them. */
-  for (a = agnxtattr (g, kind, NIL (Agsym_t *));
-       a != NULL;
-       a = agnxtattr (g, kind, a))
-    {
-      n++;
-    }
-
-  n++;					/* Space for NULL on the end */
-  *new_attrs = (Agsym_t **) malloc (n * sizeof (**new_attrs));
-  *old_attrs = (Agsym_t **) malloc (n * sizeof (**old_attrs));
-
-  /* Add the attributes to the new graph */
-  n = 0;
-  for (a = agnxtattr (g, kind, NIL (Agsym_t *));
-       a != NULL;
-       a = agnxtattr (g, kind, a))
-    {
-      (*old_attrs)[n] = a;
-      (*new_attrs)[n] = agattr (ng, kind, a->name, "");
-      n++;
-    }
-
-  (*old_attrs)[n] = NULL;		/* end marker */
-  (*new_attrs)[n] = NULL;		/* end marker */
-
-}	/* clone_attributes */
-
-
-/*! Add a clone of one node to a graph with all its attributes.
-
-    @param [in] g      Graph to add to
-    @param [in] nodep  Orignal node to clone
-
-    @return  The cloned node */
-static Agnode_t *
-add_node (Agraph_t *g,
-	  Agnode_t *nodep)
-{
-  Agnode_t *new_nodep = agnode (g, agnameof (nodep), TRUE);
-  int  i;
-
-  /* Set all the attributes. We know already that these attributes are
-     permitted, so we don't need to use safeset! */
-  for (i = 0; old_node_attrs[i] != NULL; i++)
-    {
-      agxset (new_nodep, new_node_attrs[i], agxget (nodep, old_node_attrs[i]));
-    }
-
-  return new_nodep;
-
-}	/* add_node () */
-
-
-/*! Add a clone of one edge to a graph with all its attributes.
-
-    @param [in] g      Graph to add to
-    @param [in] edgep  Orignal edge to clone
-    @param [in] tailp  Tail node of the edge
-    @param [in] headp  Head node of the edge
-
-    @return  The cloned edge */
-static Agedge_t *
-add_edge (Agraph_t *g,
-	  Agedge_t *edgep,
-	  Agnode_t *tailp,
-	  Agnode_t *headp)
-{
-  Agedge_t *new_edgep = agedge (g, tailp, headp, agnameof (edgep), TRUE);
-  int  i;
-
-  /* Set all the attributes. We know already that these attributes are
-     permitted, so we don't need to use safeset! */
-  for (i = 0; old_edge_attrs[i] != NULL; i++)
-    {
-      agxset (new_edgep, new_edge_attrs[i], agxget (edgep, old_edge_attrs[i]));
-    }
-
-  return new_edgep;
-
-}	/* add_edge () */
-
-
-/*! Check if attributes match
-
-    The supplied match list includes values of attributes that must match or
-    not. We check that all the criteria are met for the supplied object.
-
-    @param [in] obj   The object to check
-    @param [in] kind  The kind of object (AGEDGE, AGNODE)
-    @param [in] amp   The match list
-
-    @return  TRUE if all attribute match/don't match as required, FALSE
-    otherwise */
-static int
-check_attributes (void         *objp,
-		  int           kind,
-		  Attr_match_t *amp)
-{
-  int  res = TRUE;
-
-  for (; amp != NULL; amp = amp->next)
-    {
-      if (amp->kind == kind)
-	{
-	  char *val = agxget (objp, amp->attr);
-
-	  if (amp->matchit
-	      ? 0 != strcmp (amp->value, val)
-	      : 0 == strcmp (amp->value, val))
-	    {
-	      return FALSE;
-	    }
-	}
-    }
-
-  return  TRUE;
-
-}	/* check_attributes () */
+/* All the attributes held by original and new graphs. */
+static All_attr_t old_attrs;		/*!< Attributes in old graph */
+static All_attr_t new_attrs;		/*!< Attributes in new graph */
 
 
 /*! Recursively add nodes to a sub-tree.
@@ -234,7 +74,7 @@ add_nodes (Agraph_t     *g,
      depth limit. */
   if (NULL == (fromp = agnode (ng, node_name, FALSE)))
     {
-      fromp = add_node (ng, nodep);
+      fromp = clone_node (ng, nodep, &old_attrs, &new_attrs);
 
       if (depth > 0)
 	{
@@ -253,15 +93,17 @@ add_nodes (Agraph_t     *g,
 		{
 		  if (from_root)
 		    {
-			add_edge (ng, edgep, fromp,
+		      clone_edge (ng, edgep, fromp,
 				  add_nodes (g, ng, towardp, depth - 1,
-					     from_root, amp));
+					     from_root, amp),
+				  &old_attrs, &new_attrs);
 		    }
 		  else
 		    {
-			add_edge (ng, edgep,
+		      clone_edge (ng, edgep,
 				  add_nodes (g, ng, towardp, depth - 1,
-					     from_root, amp), fromp);
+					     from_root, amp), fromp,
+				  &old_attrs, &new_attrs);
 		    }
 		}
 	    }
@@ -457,8 +299,8 @@ main(int    argc,
   ng = agopen (ngname, g->desc, NULL);
 
   /* Make tables of all the attributes for nodes and edges */
-  clone_attributes (g, ng, &old_node_attrs, &new_node_attrs, AGNODE);
-  clone_attributes (g, ng, &old_edge_attrs, &new_edge_attrs, AGEDGE);
+  clone_attributes (g, ng, &old_attrs, &new_attrs, AGNODE);
+  clone_attributes (g, ng, &old_attrs, &new_attrs, AGEDGE);
 
   /* Copy the graph attributes */
   Agsym_t *a;
