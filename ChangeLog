@@ -1,5 +1,14 @@
 2012-09-19  Jeremy Bennett  <jeremy.bennett@embecosm.com>
 
+	* tools/connect.c <Countrec_t>: Created.
+	<opts>: Declaration moved to head of file.
+	(print_usage, parse_args): Declared static.
+	(init_count): Created.
+	(add_nodes): Created (as framework).
+	(main): Added call to init_count, added count to graph label.
+
+2012-09-19  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
 	* lib/graphlib.h (clone_attributes): Prototype changed.
 	(clone_attributes_kind): Created.
 	(label_extend_graph): Created.

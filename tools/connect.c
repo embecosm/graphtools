@@ -43,9 +43,32 @@
 #include "graphtools.h"
 
 
-/* All the attributes held by original and new graphs. */
+/*! All the attributes held by original and new graphs. */
 static All_attr_t old_attrs;		/*!< Attributes in old graph */
 static All_attr_t new_attrs;		/*!< Attributes in new graph */
+
+/*! A global structure holding all the options. */
+static struct
+{
+  char *label_from;		/*!< Prefix of the start node label */
+  char *label_to;		/*!< Prefix of the end node label */
+  char *output;			/*!< Output filename ("-" for stdout) */
+  char *input;			/*!< Input filename ("-" for stdin) */
+  FILE *fd_out;			/*!< Descriptor for opened output file */
+  FILE *fd_in;			/*!< Descriptor for opened input file */
+} opts = 
+  {
+    .label_from = "",
+    .label_to   = "",
+    .output     = "-",
+    .input      = "-"
+  };
+
+/*! A type for records maintaining a count. */
+typedef struct countrec {
+  Agrec_t  header;		/*!< Standard record header */
+  int      count;		/*!< a count for this node */
+} Countrec_t;
 
 
 /*! Print details of usage
@@ -55,7 +78,7 @@ static All_attr_t new_attrs;		/*!< Attributes in new graph */
     @param[in] prog  Name of the program causing the error.
     @param[in] fd    Where to print the details (stdout for help, sterr for
                      errors. */
-void
+static void
 print_usage (char *prog,
 	     FILE *fd)
 {
@@ -81,31 +104,13 @@ print_usage (char *prog,
 }	/* print_usage () */
 
 
-/* A global structure holding all the options. */
-static struct
-{
-  char *label_from;		/*!< Prefix of the start node label */
-  char *label_to;		/*!< Prefix of the end node label */
-  char *output;			/*!< Output filename ("-" for stdout) */
-  char *input;			/*!< Input filename ("-" for stdin) */
-  FILE *fd_out;			/*!< Descriptor for opened output file */
-  FILE *fd_in;			/*!< Descriptor for opened input file */
-} opts = 
-  {
-    .label_from = "",
-    .label_to   = "",
-    .output     = "-",
-    .input      = "-"
-  };
-
-
 /*! Parse the arguments.
 
     Also open the files.
 
     @param [in] argc  Number of arguments
     @param [in] argv  Vector of arguments */
-void
+static void
 parse_args (int    argc,
 	    char **argv)
 {
@@ -220,6 +225,59 @@ parse_args (int    argc,
 }	/* parse_args () */
 
 
+/*! Initialize the count record for each node.
+
+    An initial value of -1 indicates this node has not been visited.
+
+    @param[in] g  Graph containing the nodes to be initialized. */
+static void
+init_count (Agraph_t *g)
+{
+  /* Initialize a record holding the count for all nodes. */
+  aginit (ng, AGNODE, "count", sizeof (Countrec_t), AG_MTF_SOFT);
+
+  /* Iterate over all nodes setting the count to 1. */
+  for (nodep = agfstnode (g); nodep != NULL; nodep = agnxtnode (g, nodep))
+    {
+      Countrec_t *recp = (Countrec_t *) aggetrec (nodep, "count", AG_MTF_SOFT);
+      recp->count = -1;
+    }
+}	/* init_count () */
+
+
+/*! Recursively add nodes to a sub-tree.
+
+    We look at nodes that go from the start node to the end node. If a node is
+    a connection point to the end nde we add it to the new graph.
+
+    @param [in] og         Old graph
+    @param [in] ng         New graph
+    @param [in] nodep      Node we are currently at
+    @param [in] endp       End node
+
+    @return  The number of routes to the end node from the current node. */
+static Agnode_t *
+add_nodes (Agraph_t     *og,
+	   Agraph_t     *ng,
+	   Agnode_t     *nodep,
+	   Agnode_t     *endp)
+{
+  Countrec_t *recp = (Countrec_t *) aggetrec (nodep, "count", AG_MTF_SOFT);
+
+  /* If we have seen this node before, just return its count. */
+  if (recp->count != -1)
+    {
+      return recp->count;
+    }
+
+  /* If this node is the end node, set its count to 1, add the node, together
+     with any edges */
+
+  /* Need to recurse here. */
+  return 0
+
+}
+  
 /*! Main program
 
     @param [in] argc  Number of arguments
@@ -280,8 +338,8 @@ main(int    argc,
       exit (1);
     }
 
-  /* Create a new graph, add all the attributes from the old graph and
-     labelled appropriately. */
+  /* Create a new graph, add all the attributes from the old graph, labelled
+     appropriately and with an initial count of -1 on each node. */
   Agraph_t *ng;
   char     *ngname  = malloc (snprintf (NULL, 0, "%s_subgraph", gname) + 1);
   char     *nglabel = malloc (snprintf (NULL, 0, "%s -> %s", opts.label_from,
@@ -295,9 +353,15 @@ main(int    argc,
   sprintf(nglabel, "%s -> %s", opts.label_from, opts.label_to);
   label_extend_graph (ng, nglabel);
 
+  init_count (ng);
+
   /* Start at the root node and find all the nodes deriving from it, adding
      those nodes and the edges connecting them to the graph. Then write out
      the graph. */
+  int num_routes    = add_nodes (g, ng, startp, endp);
+  char *route_count = malloc (snprintf (NULL, 0, "%d routes", num_routes) + 1);
+  sprintf(route_count, "%d routes", num_routes);
+  label_extend_graph (ng, route_count);
 
   agwrite (ng, stdout);
 
