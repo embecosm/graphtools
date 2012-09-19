@@ -22,20 +22,25 @@ and on Red Hat/Fedora/CentOS
 Installing
 ==========
 
-No _makefile_ yet. Single line compile
+Standard GNU autotools install. See INSTALL for details.
 
-    gcc subgraph.c -lcgraph -o subgraph
+    mkdir bd
+    cd bd
+    ../configure
+    make
+    make install
 
-Install by copying the binary (_subgraph_) to your preferred location
+Use --prefix with configure to adjust the installation location.
 
 Usage
 =====
 
 Up to date summary can be obtained by
 
-    subgraph -h
+    subgraph --help
+    connect --help
 
-Verilator (http://www.veripool.org/wiki/verilator) generated DOT graphs at
+Verilator (http://www.veripool.org/wiki/verilator) generates DOT graphs at
 various stages during compilations. These graphs use both colors and style of
 nodes and edges to indicate particular properties.
 

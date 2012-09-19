@@ -290,37 +290,17 @@ main(int    argc,
       exit (1);
     }
 
-  /* Create a new graph, add all the node and edge attributes from the old
-     graph. */
+  /* Create a new graph, add all the attributes from the old graph and
+     labelled appropriately. */
   Agraph_t *ng;
   char     *ngname = malloc (snprintf (NULL, 0, "%s_subgraph", gname) + 1);
 
   sprintf (ngname, "%s_subgraph", gname);
   ng = agopen (ngname, g->desc, NULL);
 
-  /* Make tables of all the attributes for nodes and edges */
-  clone_attributes (g, ng, &old_attrs, &new_attrs, AGNODE);
-  clone_attributes (g, ng, &old_attrs, &new_attrs, AGEDGE);
+  clone_attributes (g, ng, &old_attrs, &new_attrs);
 
-  /* Copy the graph attributes */
-  Agsym_t *a;
-
-  for (a = agnxtattr (g, AGRAPH, NIL (Agsym_t *));
-       a != NULL;
-       a = agnxtattr (g, AGRAPH, a))
-    {
-      char *val = agxget (g, a);
-
-      if (0 == strcmp(a->name, "label"))
-	{
-	  char *newval = malloc (snprintf (NULL, 0, "%s\\n%s", val,
-					   root_label) + 1);
-	  sprintf (newval, "%s\\n%s", val, root_label);
-	  val = newval;
-	}
-	  
-      agsafeset (ng, a->name, val, "");
-    }
+  label_extend_graph (ng, root_label);
 
   /* Start at the root node and find all the nodes deriving from it, adding
      those nodes and the edges connecting them to the graph. Then write out

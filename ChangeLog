@@ -1,3 +1,15 @@
+2012-09-19  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	* lib/graphlib.h (clone_attributes): Prototype changed.
+	(clone_attributes_kind): Created.
+	(label_extend_graph): Created.
+	* lib/graphtools.h:
+	* README: Updated for new installation instructions.
+	* tools/connect.c (main): Use new clone_attributes and
+	label_extend_graph functions.
+	* tools/subgraph.c (main): Use new clone_attributes and
+	label_extend_graph functions.
+
 2012-09-18  Jeremy Bennett  <jeremy.bennett@embecosm.com>
 
 	* configure: Regenerated.

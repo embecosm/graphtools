@@ -53,8 +53,7 @@ typedef struct all_attr
 void clone_attributes (Agraph_t   *og,
 		       Agraph_t   *ng,
 		       All_attr_t *old_attrs,
-		       All_attr_t *new_attrs,
-		       int         kind);
+		       All_attr_t *new_attrs);
 
 Agnode_t *clone_node  (Agraph_t   *g,
 		       Agnode_t   *nodep,
@@ -71,5 +70,8 @@ Agedge_t *clone_edge (Agraph_t   *g,
 int  check_attributes (void         *objp,
 		       int           kind,
 		       Attr_match_t *amp);
+
+void  label_extend_graph (Agraph_t *g,
+			  char     *str);
 
 #endif

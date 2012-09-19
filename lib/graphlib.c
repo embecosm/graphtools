@@ -50,8 +50,62 @@
     vector for the attributes in the old graph, one for the same attributes
     added to the new graph.
 
-    Note that we don't do all kinds at once, since in some circumstances we
-    may not need all kinds.
+    @note If the old or new attribute structures have already been used for
+          cloning, the old data will be thrown away, but not deleted. Potential
+          memory leak.
+
+    @param [in]  og                 Old graph
+    @param [in]  ng                 New graph
+    @param [out] old_attrs_vec_ptr  Vector for attributes in old graph
+    @param [out] new_attrs_vec_ptr  Vector for attributes added to new graph
+    @param [in]  kind               Kind of attributes to clone. */
+static void
+clone_attributes_kind (Agraph_t   *og,
+		       Agraph_t   *ng,
+		       Agsym_t  ***old_attrs_vec_ptr,
+		       Agsym_t  ***new_attrs_vec_ptr,
+		       int         kind)
+{
+  int  n = 0;
+  Agsym_t *a;
+
+  /* Find out how many node attributes and alloc space for them. */
+  for (a = agnxtattr (og, kind, NIL (Agsym_t *));
+       a != NULL;
+       a = agnxtattr (og, kind, a))
+    {
+      n++;
+    }
+
+  n++;					/* Space for NULL on the end */
+  *new_attrs_vec_ptr = (Agsym_t **) calloc (sizeof (Agsym_t *), n);
+  *old_attrs_vec_ptr = (Agsym_t **) calloc (sizeof (Agsym_t *), n);
+
+  /* Add the attributes to the new graph */
+  n = 0;
+  for (a = agnxtattr (og, kind, NIL (Agsym_t *));
+       a != NULL;
+       a = agnxtattr (og, kind, a))
+    {
+      *old_attrs_vec_ptr[n] = a;
+      *new_attrs_vec_ptr[n] = agattr (ng, kind, a->name, "");
+      n++;
+    }
+
+  *old_attrs_vec_ptr[n] = NULL;		/* end marker */
+  *new_attrs_vec_ptr[n] = NULL;		/* end marker */
+
+}	/* clone_attributes_kind */
+
+
+/*! Clone all the attributes of the old graph.
+
+    Clone the string attributes of each kind (AGRAPH, AGNODE or AGEDGE) from
+    one graph into a new graph.
+
+    For each kind, create two null terminated vectors of attributes. One
+    vector for the attributes in the old graph, one for the same attributes
+    added to the new graph.
 
     @note If the old or new attribute structures have already been used for
           cloning, the old data will be thrown away, but not deleted. Potential
@@ -60,65 +114,21 @@
     @param [in]  og         Old graph
     @param [in]  ng         New graph
     @param [out] old_attrs  Structure for attributes in old graph
-    @param [out] new_attrs  Structure for attributes added to new graph
-    @param [in]  kind       Kind of attributes to clone. */
+    @param [out] new_attrs  Structure for attributes added to new graph */
 void
-clone_attributes (Agraph_t   *g,
+clone_attributes (Agraph_t   *og,
 		  Agraph_t   *ng,
 		  All_attr_t *old_attrs,
-		  All_attr_t *new_attrs,
-		  int         kind)
+		  All_attr_t *new_attrs)
 {
-  int  n = 0;
-  Agsym_t *a;
+  /* Get the attributes of each kind. */
+  clone_attributes_kind (og, ng, &(old_attrs->graph_attrs),
+			 &(new_attrs->graph_attrs), AGRAPH);
+  clone_attributes_kind (og, ng, &(old_attrs->node_attrs),
+			 &(new_attrs->node_attrs), AGNODE);
+  clone_attributes_kind (og, ng, &(old_attrs->edge_attrs),
+			 &(new_attrs->edge_attrs), AGEDGE);
 
-  /* Find out how many node attributes and alloc space for them. */
-  for (a = agnxtattr (g, kind, NIL (Agsym_t *));
-       a != NULL;
-       a = agnxtattr (g, kind, a))
-    {
-      n++;
-    }
-
-  n++;					/* Space for NULL on the end */
-  Agsym_t **new_attrs_kind = (Agsym_t **) calloc (sizeof (*new_attrs_kind), n);
-  Agsym_t **old_attrs_kind = (Agsym_t **) calloc (sizeof (*old_attrs_kind), n);
-
-  /* Add the attributes to the new graph */
-  n = 0;
-  for (a = agnxtattr (g, kind, NIL (Agsym_t *));
-       a != NULL;
-       a = agnxtattr (g, kind, a))
-    {
-      old_attrs_kind[n] = a;
-      new_attrs_kind[n] = agattr (ng, kind, a->name, "");
-      n++;
-    }
-
-  old_attrs_kind[n] = NULL;		/* end marker */
-  new_attrs_kind[n] = NULL;		/* end marker */
-
-  switch (kind)
-    {
-    case AGRAPH:
-      old_attrs->graph_attrs = old_attrs_kind;
-      new_attrs->graph_attrs = new_attrs_kind;
-      break;
-
-    case AGNODE:
-      old_attrs->node_attrs = old_attrs_kind;
-      new_attrs->node_attrs = new_attrs_kind;
-      break;
-
-    case AGEDGE:
-      old_attrs->edge_attrs = old_attrs_kind;
-      new_attrs->edge_attrs = new_attrs_kind;
-      break;
-
-    default:
-      fprintf (stderr, "Warning: cloning unknown attribute kind %d\n", kind);
-      break;
-    }
 }	/* clone_attributes */
 
 
@@ -220,3 +230,23 @@ check_attributes (void         *objp,
   return  TRUE;
 
 }	/* check_attributes () */
+
+
+/*! Extend the label of a graph.
+
+    A second line is added to the label with the supplied text
+
+    @param[in] g    Graph
+    @param[in] str  Text to add to the new graph. */
+void
+label_extend_graph (Agraph_t *g,
+		    char     *str)
+{
+  Agsym_t *a      = agattr (g, AGRAPH, "label", "");
+  char    *val    = agxget (g, a);
+  char    *newval = malloc (snprintf (NULL, 0, "%s\\n%s", val, str) + 1);
+
+  sprintf (newval, "%s\\n%s", val, str);
+  agsafeset (g, a->name, newval, "");
+
+}	/* label_extend_graph () */
