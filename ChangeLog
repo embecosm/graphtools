@@ -1,4 +1,32 @@
-2012-09-19  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+2012-09-20  Jeremy Bennett  <jeremy.bennett@embecosm.com>
+
+	* aclocal.m4, configure: Regenerated.
+	* configure.ac: Silent rules added.
+	* doc/Makefile.in: Regenerated.
+	* lib/graphlib.c: Use gp, ogp and ngp throughout for pointers to
+	generic, old and new graphs respectively.
+	(clone_attributes_kind): Rename old_attrs_vec_ptr and
+	new_attrs_vec_ptr to old_attrs_vecp and new_attrs_vecp, use
+	parentheses around old_attrs_vecp and new_attrs_vecp when
+	indexing.
+	(label_extend_graph): Allow for label attribute not existing.
+	* lib/Makefile.in: Regenerated.
+	* Makefile.in, testsuite/Makefile.in: Regenerated.
+	* tools/connect.c: Use gp, ogp and ngp throughout for pointers to
+	generic, old and new graphs respectively.
+	<Countrec_t>: Add field for nodep.
+	(init_count): Set nodep field to NULL. Replace reference to
+	AG_MTF_SOFT by FALSE (upstream documentation error).
+	(add_nodes): Provide implementation of algorithm.
+	(main): Terminate search for startp and endp when *both* are
+	found, initialize all attributes on new graph and add route count to the
+	label, write to given output file, not stdout.
+	* tools/Makefile.in: Regenerated.
+	* tool/subgraph.c: Use gp, ogp and ngp throughout for pointers to
+	generic, old and new graphs respectively.
+	(main): Initialize all attributes on new graph.
+
+2012-09-20  Jeremy Bennett  <jeremy.bennett@embecosm.com>
 
 	* tools/connect.c <Countrec_t>: Created.
 	<opts>: Declaration moved to head of file.

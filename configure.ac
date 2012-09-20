@@ -34,9 +34,11 @@ AC_CONFIG_MACRO_DIR([m4])
 # Generically use extensions such as _GNU_SOURCE if available.
 AC_USE_SYSTEM_EXTENSIONS
 
-# Add the extra stuff for libtool and automake and use a standard config header.
+# Add the extra stuff for libtool and automake, with default no echoing of
+# commands and use a standard config header.
 AC_PROG_LIBTOOL
 AM_INIT_AUTOMAKE
+m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
 AC_CONFIG_HEADERS([config.h])
 

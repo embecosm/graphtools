@@ -54,46 +54,46 @@
           cloning, the old data will be thrown away, but not deleted. Potential
           memory leak.
 
-    @param [in]  og                 Old graph
-    @param [in]  ng                 New graph
-    @param [out] old_attrs_vec_ptr  Vector for attributes in old graph
-    @param [out] new_attrs_vec_ptr  Vector for attributes added to new graph
-    @param [in]  kind               Kind of attributes to clone. */
+    @param [in]  ogp             Old graph
+    @param [in]  ngp             New graph
+    @param [out] old_attrs_vecp  Vector for attributes in old graph
+    @param [out] new_attrs_vecp  Vector for attributes added to new graph
+    @param [in]  kind            Kind of attributes to clone. */
 static void
-clone_attributes_kind (Agraph_t   *og,
-		       Agraph_t   *ng,
-		       Agsym_t  ***old_attrs_vec_ptr,
-		       Agsym_t  ***new_attrs_vec_ptr,
+clone_attributes_kind (Agraph_t   *ogp,
+		       Agraph_t   *ngp,
+		       Agsym_t  ***old_attrs_vecp,
+		       Agsym_t  ***new_attrs_vecp,
 		       int         kind)
 {
   int  n = 0;
   Agsym_t *a;
 
   /* Find out how many node attributes and alloc space for them. */
-  for (a = agnxtattr (og, kind, NIL (Agsym_t *));
+  for (a = agnxtattr (ogp, kind, NIL (Agsym_t *));
        a != NULL;
-       a = agnxtattr (og, kind, a))
+       a = agnxtattr (ogp, kind, a))
     {
       n++;
     }
 
   n++;					/* Space for NULL on the end */
-  *new_attrs_vec_ptr = (Agsym_t **) calloc (sizeof (Agsym_t *), n);
-  *old_attrs_vec_ptr = (Agsym_t **) calloc (sizeof (Agsym_t *), n);
+  *new_attrs_vecp = (Agsym_t **) calloc (sizeof (Agsym_t *), n);
+  *old_attrs_vecp = (Agsym_t **) calloc (sizeof (Agsym_t *), n);
 
   /* Add the attributes to the new graph */
   n = 0;
-  for (a = agnxtattr (og, kind, NIL (Agsym_t *));
+  for (a = agnxtattr (ogp, kind, NIL (Agsym_t *));
        a != NULL;
-       a = agnxtattr (og, kind, a))
+       a = agnxtattr (ogp, kind, a))
     {
-      *old_attrs_vec_ptr[n] = a;
-      *new_attrs_vec_ptr[n] = agattr (ng, kind, a->name, "");
+      (*old_attrs_vecp)[n] = a;
+      (*new_attrs_vecp)[n] = agattr (ngp, kind, a->name, "");
       n++;
     }
 
-  *old_attrs_vec_ptr[n] = NULL;		/* end marker */
-  *new_attrs_vec_ptr[n] = NULL;		/* end marker */
+  (*old_attrs_vecp)[n] = NULL;		/* end marker */
+  (*new_attrs_vecp)[n] = NULL;		/* end marker */
 
 }	/* clone_attributes_kind */
 
@@ -111,50 +111,50 @@ clone_attributes_kind (Agraph_t   *og,
           cloning, the old data will be thrown away, but not deleted. Potential
           memory leak.
 
-    @param [in]  og         Old graph
-    @param [in]  ng         New graph
-    @param [out] old_attrs  Structure for attributes in old graph
-    @param [out] new_attrs  Structure for attributes added to new graph */
+    @param [in]  ogp         Old graph
+    @param [in]  ngp         New graph
+    @param [out] old_attrsp  Structure for attributes in old graph
+    @param [out] new_attrsp  Structure for attributes added to new graph */
 void
-clone_attributes (Agraph_t   *og,
-		  Agraph_t   *ng,
-		  All_attr_t *old_attrs,
-		  All_attr_t *new_attrs)
+clone_attributes (Agraph_t   *ogp,
+		  Agraph_t   *ngp,
+		  All_attr_t *old_attrsp,
+		  All_attr_t *new_attrsp)
 {
   /* Get the attributes of each kind. */
-  clone_attributes_kind (og, ng, &(old_attrs->graph_attrs),
-			 &(new_attrs->graph_attrs), AGRAPH);
-  clone_attributes_kind (og, ng, &(old_attrs->node_attrs),
-			 &(new_attrs->node_attrs), AGNODE);
-  clone_attributes_kind (og, ng, &(old_attrs->edge_attrs),
-			 &(new_attrs->edge_attrs), AGEDGE);
+  clone_attributes_kind (ogp, ngp, &(old_attrsp->graph_attrs),
+			 &(new_attrsp->graph_attrs), AGRAPH);
+  clone_attributes_kind (ogp, ngp, &(old_attrsp->node_attrs),
+			 &(new_attrsp->node_attrs), AGNODE);
+  clone_attributes_kind (ogp, ngp, &(old_attrsp->edge_attrs),
+			 &(new_attrsp->edge_attrs), AGEDGE);
 
 }	/* clone_attributes */
 
 
 /*! Add a clone of one node to a graph with all its attributes.
 
-    @param [in] g          Graph to add to
+    @param [in] gp          Graph to add to
     @param [in] nodep      Orignal node to clone
-    @param [in] old_attrs  Structure holding attributes for original node
-    @param [in] new_attrs  Structure holding attributes for new node
+    @param [in] old_attrsp  Structure holding attributes for original node
+    @param [in] new_attrsp  Structure holding attributes for new node
 
     @return  The cloned node */
 Agnode_t *
-clone_node (Agraph_t   *g,
+clone_node (Agraph_t   *gp,
 	    Agnode_t   *nodep,
-	    All_attr_t *old_attrs,
-	    All_attr_t *new_attrs)
+	    All_attr_t *old_attrsp,
+	    All_attr_t *new_attrsp)
 {
-  Agnode_t *new_nodep = agnode (g, agnameof (nodep), TRUE);
+  Agnode_t *new_nodep = agnode (gp, agnameof (nodep), TRUE);
   int  i;
 
   /* Set all the attributes. We know already that these attributes are
      permitted, so we don't need to use safeset! */
-  for (i = 0; old_attrs->node_attrs[i] != NULL; i++)
+  for (i = 0; old_attrsp->node_attrs[i] != NULL; i++)
     {
-      agxset (new_nodep, new_attrs->node_attrs[i],
-	      agxget (nodep, old_attrs->node_attrs[i]));
+      agxset (new_nodep, new_attrsp->node_attrs[i],
+	      agxget (nodep, old_attrsp->node_attrs[i]));
     }
 
   return new_nodep;
@@ -164,31 +164,31 @@ clone_node (Agraph_t   *g,
 
 /*! Add a clone of one edge to a graph with all its attributes.
 
-    @param [in] g          Graph to add to
-    @param [in] edgep      Orignal edge to clone
-    @param [in] tailp      Tail node of the edge
-    @param [in] headp      Head node of the edge
-    @param [in] old_attrs  Structure holding attributes for original edge
-    @param [in] new_attrs  Structure holding attributes for new edge
+    @param [in] gp          Graph to add to
+    @param [in] edgep       Orignal edge to clone
+    @param [in] tailp       Tail node of the edge
+    @param [in] headp       Head node of the edge
+    @param [in] old_attrsp  Structure holding attributes for original edge
+    @param [in] new_attrsp  Structure holding attributes for new edge
 
     @return  The cloned edge */
 Agedge_t *
-clone_edge (Agraph_t *g,
+clone_edge (Agraph_t *gp,
 	    Agedge_t *edgep,
 	    Agnode_t *tailp,
 	    Agnode_t *headp,
-	    All_attr_t *old_attrs,
-	    All_attr_t *new_attrs)
+	    All_attr_t *old_attrsp,
+	    All_attr_t *new_attrsp)
 {
-  Agedge_t *new_edgep = agedge (g, tailp, headp, agnameof (edgep), TRUE);
+  Agedge_t *new_edgep = agedge (gp, tailp, headp, agnameof (edgep), TRUE);
   int  i;
 
   /* Set all the attributes. We know already that these attributes are
      permitted, so we don't need to use safeset! */
-  for (i = 0; old_attrs->edge_attrs[i] != NULL; i++)
+  for (i = 0; old_attrsp->edge_attrs[i] != NULL; i++)
     {
-      agxset (new_edgep, new_attrs->edge_attrs[i],
-	      agxget (edgep, old_attrs->edge_attrs[i]));
+      agxset (new_edgep, new_attrsp->edge_attrs[i],
+	      agxget (edgep, old_attrsp->edge_attrs[i]));
     }
 
   return new_edgep;
@@ -201,7 +201,7 @@ clone_edge (Agraph_t *g,
     The supplied match list includes values of attributes that must match or
     not. We check that all the criteria are met for the supplied object.
 
-    @param [in] obj   The object to check
+    @param [in] objp  The object to check
     @param [in] kind  The kind of object (AGEDGE, AGNODE)
     @param [in] amp   The match list
 
@@ -236,17 +236,17 @@ check_attributes (void         *objp,
 
     A second line is added to the label with the supplied text
 
-    @param[in] g    Graph
+    @param[in] gp    Graph
     @param[in] str  Text to add to the new graph. */
 void
-label_extend_graph (Agraph_t *g,
+label_extend_graph (Agraph_t *gp,
 		    char     *str)
 {
-  Agsym_t *a      = agattr (g, AGRAPH, "label", "");
-  char    *val    = agxget (g, a);
+  Agsym_t *a      = agattr (gp, AGRAPH, "label", NULL);
+  char    *val    = a ? agxget (gp, a) : "";
   char    *newval = malloc (snprintf (NULL, 0, "%s\\n%s", val, str) + 1);
 
   sprintf (newval, "%s\\n%s", val, str);
-  agsafeset (g, a->name, newval, "");
+  agsafeset (gp, "label", newval, "");
 
 }	/* label_extend_graph () */
